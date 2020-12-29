@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t gabcodearmada/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true gabcodearmada/react-test npm test
+
+after_success:
+  - docker build -t gabcodearmada/multi-client ./client
+  - docker build -t gabcodearmada/multi-nginx ./nginx
+  - docker build -t gabcodearmada/multi-server ./server
+  - docker build -t gabcodearmada/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push gabcodearmada/multi-client
+  - docker push gabcodearmada/multi-nginx
+  - docker push gabcodearmada/multi-server
+  - docker push gabcodearmada/multi-worker
